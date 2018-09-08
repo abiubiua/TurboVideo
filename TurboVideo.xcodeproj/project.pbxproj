@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		324BF1C121439BBC00C04F2B /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 324BF1C021439BBC00C04F2B /* main.c */; };
+		324BF1CA2143A27100C04F2B /* tcpserver.c in Sources */ = {isa = PBXBuildFile; fileRef = 324BF1C82143A27100C04F2B /* tcpserver.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,9 @@
 /* Begin PBXFileReference section */
 		324BF1BD21439BBC00C04F2B /* TurboVideo */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TurboVideo; sourceTree = BUILT_PRODUCTS_DIR; };
 		324BF1C021439BBC00C04F2B /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		324BF1C82143A27100C04F2B /* tcpserver.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = tcpserver.c; sourceTree = "<group>"; };
+		324BF1C92143A27100C04F2B /* tcpserver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tcpserver.h; sourceTree = "<group>"; };
+		324BF1CD2143A46900C04F2B /* log.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = log.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,9 +61,36 @@
 		324BF1BF21439BBC00C04F2B /* TurboVideo */ = {
 			isa = PBXGroup;
 			children = (
+				324BF1CB2143A43300C04F2B /* utils */,
+				324BF1C72143A21300C04F2B /* network */,
 				324BF1C021439BBC00C04F2B /* main.c */,
 			);
 			path = TurboVideo;
+			sourceTree = "<group>";
+		};
+		324BF1C72143A21300C04F2B /* network */ = {
+			isa = PBXGroup;
+			children = (
+				324BF1C82143A27100C04F2B /* tcpserver.c */,
+				324BF1C92143A27100C04F2B /* tcpserver.h */,
+			);
+			path = network;
+			sourceTree = "<group>";
+		};
+		324BF1CB2143A43300C04F2B /* utils */ = {
+			isa = PBXGroup;
+			children = (
+				324BF1CC2143A44700C04F2B /* log */,
+			);
+			path = utils;
+			sourceTree = "<group>";
+		};
+		324BF1CC2143A44700C04F2B /* log */ = {
+			isa = PBXGroup;
+			children = (
+				324BF1CD2143A46900C04F2B /* log.h */,
+			);
+			path = log;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -119,6 +150,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				324BF1CA2143A27100C04F2B /* tcpserver.c in Sources */,
 				324BF1C121439BBC00C04F2B /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
