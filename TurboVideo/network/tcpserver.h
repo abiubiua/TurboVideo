@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 
-void StartTCPServer();
-void StopTCPServer();
+void StartTCPServer(void);
+void StopTCPServer(void);
 
 #endif /* tcpserver_h */

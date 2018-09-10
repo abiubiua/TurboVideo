@@ -7,9 +7,9 @@
 //
 
 #include <stdio.h>
-
+#include "tcpserver.h"
 int main(int argc, const char * argv[]) {
     // insert code here...
-    
+    StartTCPServer();
     return 0;
 }

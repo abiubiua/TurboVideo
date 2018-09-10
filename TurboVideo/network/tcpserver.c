@@ -14,6 +14,9 @@
 #include <sys/select.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 
 #define TCP_PORT 5200
@@ -22,6 +25,8 @@
 typedef struct {
     int fd;
     int on;
+    int port;
+    char ip[128];
 } fdstatus;
 
 static int running = 0;
@@ -38,6 +43,7 @@ void StartTCPServer() {
     int maxfd = 0;
     fd_set rset;
     struct timeval interval;
+    LOGI("create socket");
     int listenfd = socket(AF_INET, SOCK_STREAM, 0);
     if (listenfd < 0) {
         LOGI("create listen fd failure");
@@ -46,18 +52,22 @@ void StartTCPServer() {
 //    ioctl(listenfd, FIONBIO, &on, sizeof(on));//enable unblock
     
     localaddr.sin_family = AF_INET;
-    localaddr.sin_port = htonl(TCP_PORT);
+    localaddr.sin_port = htons(TCP_PORT);
     localaddr.sin_addr.s_addr = INADDR_ANY;
+    LOGI("bind");
     if ((err = bind(listenfd, (struct sockaddr*)&localaddr, sizeof(localaddr))) < 0) {//bind
         LOGI("bind local socket err");
         return;
     }
-    if ((err = listen(listenfd, 10)) < 0) {//bind
+    LOGI("listen");
+    if ((err = listen(listenfd, 10)) < 0) {//listen
         LOGI("listen local socket err");
         return;
     }
     interval.tv_sec = 0;
     interval.tv_usec = 20 * 1000;
+    running = 1;
+    bzero(fds, sizeof(fds));
     while(running) {
         FD_ZERO(&rset);
         FD_SET(listenfd, &rset);//for listen socket
@@ -84,14 +94,17 @@ void StartTCPServer() {
                     char buf[128] = {0};
                     struct sockaddr_in peeraddr;
                     socklen_t peeraddrlen = sizeof(peeraddr);
-                    getpeername(clientfd, (struct sockaddr*)&peeraddr, &peeraddrlen);
-                    const char *ip = inet_ntop(peeraddr.sin_family, &peeraddr, buf, peeraddrlen);
-                    int port = ntohl(peeraddr.sin_port);
-                    printf("%s:%d connected", ip, port);
+                    if (getpeername(clientfd, (struct sockaddr*)&peeraddr, &peeraddrlen) == 0) {
+                        const char *ip = inet_ntop(peeraddr.sin_family, &peeraddr.sin_addr, buf, sizeof(buf));
+                        int port = ntohs(peeraddr.sin_port);
+                        printf("%s:%d connected\n", ip, port);
+                    }
                     for (int i = 0; i < MAX_CONN_LIMIT; i++) {
                         if (!fds[i].on) {
                             fds[i].on = 1;
                             fds[i].fd = clientfd;
+                            strncpy(fds[i].ip, buf, strlen(buf));
+                            fds[i].port = ntohs(peeraddr.sin_port);
                             ++conncount;
                             break;
                         }
@@ -104,6 +117,25 @@ void StartTCPServer() {
             for (int i = 0; i < MAX_CONN_LIMIT; i++) {
                 if (!fds[i].on) continue;
                 if (FD_ISSET(fds[i].fd, &rset)) {//check client socket ready
+                    char line[1024] = {0};
+                    int nread = 0;
+                    if ((nread = (int)read(fds[i].fd, line, sizeof(line))) <= 0) {
+                        if (nread == 0) {
+                            printf("EOF %s %d\n", fds[i].ip, fds[i].port);
+                        } else {
+                            printf("socket error %d errno %d %s %d\n", nread, errno, fds[i].ip, fds[i].port);
+                        }
+                        close(fds[i].fd);
+                        bzero(&fds[i], sizeof(fdstatus));
+                    } else {
+                        printf("recv:%s\n", line);
+                        char echo[1024] = {0};
+                        snprintf(echo, sizeof(echo), "server echo:%s", line);
+                        int nwrite = 0;
+                        if ((nwrite = (int)write(fds[i].fd, echo, strlen(echo))) <= 0) {
+                            printf("write error %d errno %d\n", nwrite, errno);
+                        };
+                    }
                     
                     --n;
                 }
