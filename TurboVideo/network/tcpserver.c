@@ -8,19 +8,13 @@
 
 #include "tcpserver.h"
 #include "log.h"
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
+#include "commoninclude.h"
 
 
 #define TCP_PORT 5200
 #define MAX_CONN_LIMIT 50
+
+static const char *TAG = "tcpserver";
 
 typedef struct {
     int fd;
@@ -32,6 +26,7 @@ typedef struct {
 static int running = 0;
 
 void StartTCPServer() {
+    
     if (running) return;
     int err = 0;
     int on = 1;
@@ -43,10 +38,10 @@ void StartTCPServer() {
     int maxfd = 0;
     fd_set rset;
     struct timeval interval;
-    LOGI("create socket");
+    LOGD(TAG, "create socket");
     int listenfd = socket(AF_INET, SOCK_STREAM, 0);
     if (listenfd < 0) {
-        LOGI("create listen fd failure");
+        LOGE(TAG, "create listen fd failure");
     }
     setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));//enable reuse address
 //    ioctl(listenfd, FIONBIO, &on, sizeof(on));//enable unblock
@@ -54,14 +49,14 @@ void StartTCPServer() {
     localaddr.sin_family = AF_INET;
     localaddr.sin_port = htons(TCP_PORT);
     localaddr.sin_addr.s_addr = INADDR_ANY;
-    LOGI("bind");
+    LOGD(TAG, "bind");
     if ((err = bind(listenfd, (struct sockaddr*)&localaddr, sizeof(localaddr))) < 0) {//bind
-        LOGI("bind local socket err");
+        LOGE(TAG, "bind local socket err");
         return;
     }
-    LOGI("listen");
+    LOGD(TAG, "listen");
     if ((err = listen(listenfd, 10)) < 0) {//listen
-        LOGI("listen local socket err");
+        LOGE(TAG, "listen local socket err");
         return;
     }
     interval.tv_sec = 0;
@@ -97,7 +92,7 @@ void StartTCPServer() {
                     if (getpeername(clientfd, (struct sockaddr*)&peeraddr, &peeraddrlen) == 0) {
                         const char *ip = inet_ntop(peeraddr.sin_family, &peeraddr.sin_addr, buf, sizeof(buf));
                         int port = ntohs(peeraddr.sin_port);
-                        printf("%s:%d connected\n", ip, port);
+                        LOGI(TAG, "%s:%d connected", ip, port);
                     }
                     for (int i = 0; i < MAX_CONN_LIMIT; i++) {
                         if (!fds[i].on) {
@@ -110,7 +105,7 @@ void StartTCPServer() {
                         }
                     }
                 } else {
-                    LOGI("accept failure");
+                    LOGE(TAG, "accept failure");
                     break;
                 }
             }
@@ -121,19 +116,19 @@ void StartTCPServer() {
                     int nread = 0;
                     if ((nread = (int)read(fds[i].fd, line, sizeof(line))) <= 0) {
                         if (nread == 0) {
-                            printf("EOF %s %d\n", fds[i].ip, fds[i].port);
+                            LOGI(TAG, "EOF %s %d", fds[i].ip, fds[i].port);
                         } else {
-                            printf("socket error %d errno %d %s %d\n", nread, errno, fds[i].ip, fds[i].port);
+                            LOGE(TAG, "socket error %d errno %d %s %d\n", nread, errno, fds[i].ip, fds[i].port);
                         }
                         close(fds[i].fd);
                         bzero(&fds[i], sizeof(fdstatus));
                     } else {
-                        printf("recv:%s\n", line);
+                        LOGD(TAG, "recv:%s", line);
                         char echo[1024] = {0};
                         snprintf(echo, sizeof(echo), "server echo:%s", line);
                         int nwrite = 0;
                         if ((nwrite = (int)write(fds[i].fd, echo, strlen(echo))) <= 0) {
-                            printf("write error %d errno %d\n", nwrite, errno);
+                            LOGE(TAG, "write error %d errno %d\n", nwrite, errno);
                         };
                     }
                     
