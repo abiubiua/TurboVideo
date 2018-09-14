@@ -8,8 +8,10 @@
 
 #include <stdio.h>
 #include "tcpserver.h"
+#include "udpserver.h"
 int main(int argc, const char * argv[]) {
     // insert code here...
-    StartTCPServer();
+//    StartTCPServer();
+    StartUDPServer();
     return 0;
 }
